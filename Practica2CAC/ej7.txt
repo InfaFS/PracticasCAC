@@ -1,0 +1,40 @@
+ORG 1000H
+MSJ DB "INGRESE UN NUMERO:"
+FIN DB ?
+
+ORG 1500H
+NUM1 db ?
+NUM2 db ?
+RES db 30h
+UNO db 31h
+
+ORG 2000H
+MOV BX, OFFSET MSJ ;muevo a bx la direccion del mensaje a imprimir
+MOV AL, OFFSET FIN-OFFSET MSJ ;muevo a al la cantidad de caracteres que se imprimen
+INT 7 ;muestro en pantalla
+MOV BX, OFFSET NUM1 ;le muevo a bx la direccion del numero a ingresar
+int 6
+
+sub byte ptr [BX],30h ;guardo la cantidad de espacios que me tendria que mover por el numero 1
+mov AH,[BX]
+
+mov BX, OFFSET NUM2
+int 6
+
+sub byte ptr [BX],30h
+add AH,[BX]; guardo la cantidad de espacios que me tendria que mover por el numero 2
+
+CMP AH,0AH ;comparo cantidad de espacios
+JS seguir;si la suma es menor a 10, imprimo directamente
+
+es_mayor: sub AH,0AH; si es mayor a 10, le resto 10 a la suma y pongo un 1, siendo la resta la cantidad de espacios que me tnego que coemr despues
+MOV BX,OFFSET UNO
+MOV AL,1
+int 7
+
+seguir: MOV BX,OFFSET RES
+add [BX],ah
+MOV AL,1
+int 7
+INT 0
+END

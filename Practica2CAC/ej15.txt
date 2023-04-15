@@ -1,0 +1,64 @@
+TIMER EQU 10H
+PIC EQU 20H
+EOI EQU 20H
+N_CLK EQU 10
+N_F10 EQU 11;ver si le agrego 1
+
+ORG 40
+IP_F10 DW RUT_CLK
+
+ORG 44
+IP_CLK DW RUT_F10
+
+ORG 1000H
+NUM DB ?
+ESPACIO DB 20H
+FIN DB ?
+
+ORG 3000H
+
+
+RUT_CLK:PUSH AX 
+CMP byte ptr [BX],30H ;comparo si el valor que meti por teclado no es 0
+JNZ RESET; si no es 0 voy a reset
+INT 7;tendria que imprimirlo?
+INT 0 ;interrumpo abruptamente
+RESET: INT 7;imprimo el valor
+DEC byte ptr [BX];decremento el numero
+MOV AL, 0 
+OUT TIMER, AL; pongo al registro cont en 0
+MOV AL, EOI ;le indico al pic que termine
+OUT PIC, AL
+POP AX
+IRET
+
+RUT_F10:PUSH AX
+MOV AL,0FEH ;deshabilito interrupciones de timer
+OUT PIC+1,AL ;le indico al pic el estado
+INC DL ;incremento el contador de veces que presione f10
+MOV AL,EOI
+OUT EOI,AL;le indico al pic que termine
+MOV AL,0FCH; reanudo interrupciones del timer
+OUT PIC+1,AL
+VOLVER:POP AX
+IRET
+
+
+ORG 2000H ;D para timer; C para todo ; E para F10
+CLI ;desactivo interrupciones
+MOV AL, 0FEH ;Permito solo en el pic interrupciones de F10
+OUT PIC+1, AL ;le cargo al pic el estado 
+MOV AL, N_CLK ;le ,muevo a al la etiqueta que a su vez hace referencia a la subrutina RUT_CLK
+OUT PIC+5, AL  ;lo pongo en el registro int (y un valor)
+MOV AL,N_F10 ;le cargo ahora el de f10
+OUT PIC+4,AL ;lo pongo en un registro
+MOV AL, 1; pongo el registro COMP en 1
+OUT TIMER+1, AL ; TIMER: registro COMP
+MOV AL, 0 ;pongo el CONT en 0
+OUT TIMER, AL ; TIMER: registro CONT
+MOV BX, OFFSET NUM ;cargo para poner el mensaje
+INT 6 ;pido que metan algo
+MOV AL,OFFSET FIN - OFFSET NUM
+STI
+LAZO: JMP LAZO
+END

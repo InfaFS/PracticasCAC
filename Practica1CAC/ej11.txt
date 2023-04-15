@@ -1,0 +1,27 @@
+ORG  1000H
+TABLA db "aeiou"
+valor db "a"
+
+ORG 3000H
+subrutina:MOV BX,AX
+REPETIR: CMP byte ptr [BX],0
+JZ terminar
+CMP [BX],CL
+JNZ SIGO
+INC DL
+MOV byte ptr [BX],88H
+
+SIGO: INC BX
+JMP REPETIR
+terminar: ret
+
+ORG 2000H
+MOV DL,0
+MOV CL,valor
+MOV AX,OFFSET TABLA
+call subrutina
+
+FIN: HLT
+END
+
+(ver version con cadena)

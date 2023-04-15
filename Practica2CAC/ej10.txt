@@ -1,0 +1,36 @@
+PIC EQU 20H
+EOI EQU 20H
+N_F10 EQU 10
+ORG 40
+IP_F10 DW RUT_F10
+ORG 1000H
+ABC DB "ABCDEFGHIJKMNOPQRSTUVWXYZ"
+FIN_ABC DB ?
+ORG 3000H
+RUT_F10: PUSH AX
+MOV AL,1 ;muestro el mensaje actual de bx
+int 7
+MOV AL, EOI
+;si pusiera aca el mov al y el int 7, no me dejaria volver a llamar de vuelta ya que le estaria poniendo a EOI un valro diferente, osea que nunca "terminaria" de apretar f10
+OUT EOI, AL ; PIC: registro EOI
+POP AX
+IRET
+
+ORG 2000H
+CLI
+MOV AL, 0FEH
+OUT PIC+1, AL ; PIC: registro IMR
+MOV AL, N_F10
+OUT PIC+4, AL ; PIC: registro INT0
+MOV BX,OFFSET ABC
+
+STI
+
+LAZO: CMP byte ptr [BX],05AH ;hasta que no llegue a z recorro
+JZ fin ; si termine de recorrer voy a fin
+INC BX ;sino sigo avanzando
+JMP LAZO
+
+
+fin:INT 0
+END

@@ -1,0 +1,46 @@
+ORG 1000H
+MSJ DB "INGRESE UN NUMERO:"
+FIN DB ?
+MSJ_ERROR DB "CARACTER NO VALIDO"
+FIN2 DB ?
+ORG 1500H
+NUM DB ?
+
+ORG 3000H
+ES_NUM:PUSH BX;pusheo los registros para mantener los valores
+PUSH AX
+mov AL,[BX]; le cargo a AL el valor del numero cargado
+mov AH,30H; le cargo a AH el 0 en decimal
+mov CL,00H; en cl voy a guardar si el numero es o no valido, por defecto no sera
+verificar: CMP AH,40H;veo si no me pase del 9 decimal
+JZ volver; si es asi, vuelvo
+CMP AL,AH; sino, comparo el numero ingresado con el actual de AH
+JZ es_valido; si es valido, entonces salto a dicha etiqueta
+INC AH; si no lo es, incremente
+JMP verificar; vuelvo al loop
+
+es_valido:MOV CL,0FFH ;si es valido, entonces guardo en CL 0FFH
+volver: pop AX;libero los registros
+POP BX
+ret
+
+ORG 2000H
+MOV BX, OFFSET MSJ ;muevo a bx la direccion del mensaje a imprimir
+MOV AL, OFFSET FIN-OFFSET MSJ ;muevo a al la cantidad de caracteres que se imprimen
+INT 7 ;muestro en pantalla
+MOV BX, OFFSET NUM ;le muevo a bx la direccion del numero a ingresar
+INT 6 ;interrumpo para ingresar
+call ES_NUM ;verifico el numero
+
+CMP CL,0FFH ;comparo el valor almacenado en el registro con 0FFH, es decir si es valido
+JZ mostrar_ok; si lo es salto a mostrar
+MOV BX,OFFSET MSJ_ERROR; dado que no lo sea, guardo el offset de la cadena a imprimir que es error
+MOV AL,OFFSET FIN2- OFFSET MSJ_ERROR; guardo en AL la cantidad de caracteres a imprimir
+INT 7;muestro en pantalla
+JMP terminar; voy a interrumpir el programa
+
+mostrar_ok:MOV AL, 1 ;en caso de que era valido, solo tengo que mostrar 1 caracter, el numero en cuestion
+INT 7
+
+terminar: INT 0
+END

@@ -1,0 +1,63 @@
+ORG 1000H
+CLAVE DB "PASS"
+FIN DB ?
+PERMITIDO DB "ACCESO PERMITIDO"
+FIN_PERMITIDO DB ?
+DENEGADO DB "ACCESO DENEGADO"
+FIN_DENEGADO DB ?
+
+ORG 1500H
+
+CHAR db ?
+
+ORG 3000H
+
+ingresar_clave:push AX ;pusheo los registros para no alterar el estado
+PUSH BX
+PUSH CX
+PUSH DX
+
+mov CL,0FFh ;en CL guardare si un caracter no coincide, por defecto  coinciden todos
+MOV BX,OFFSET CLAVE ;le pongo a bx la direccion del primer elemento de la clave
+push BX; lo pusheo en la pila
+MOV CH,00H ; guardare el contador en CH
+
+iterar:CMP CH,04H ;veo si no me pase del contador
+JZ terminar; si ya hice 4 pasadas, termino
+inc CH ;sino incremento contador
+MOV BX,OFFSET CHAR ; le muevo a bx la direccion del caracter
+int 6 ; lo pongo desde teclado
+MOV DL,[BX] ; le muevo a DL el valor del caracter
+pop BX;saco de la pila la direccion de la clave
+CMP [BX],DL ;comparo el valor del elemento actual de la clave con el caracter que meti
+JZ seguir;si es igual, sigo
+mov CL,00H; si no coincide pongo en CL el valor 00h que indica que un caracter no coincide
+seguir:INC BX ;incremento en 1 la direccion de la clave para ir al siguiente elemento
+push BX ; lo meto en la pila
+JMP iterar ;itero
+
+
+terminar: CMP CL,0FFH ; veo si CL esta alterado
+JNZ terminar2 ; si es asi, voy al segundo terminar
+mov BX,OFFSET PERMITIDO ;si no es asi, imprimo permitido
+MOV AL, OFFSET FIN_PERMITIDO - OFFSET PERMITIDO
+INT 7
+JMP retornar ;salgo de la subrutina
+
+terminar2: MOV BX,OFFSET DENEGADO ;si esta alterado CL,imprimo acceso denegado
+MOV AL, OFFSET FIN_DENEGADO - OFFSET DENEGADO
+int 7
+
+retornar: POP BX ;devuelvo el estado de los registros
+POP DX 
+POP CX
+POP BX
+POP AX
+ret
+
+
+ORG 2000H
+
+call ingresar_clave ;llamo a la subrutina
+INT 0 ;finalizo con int 0
+END

@@ -1,0 +1,17 @@
+ORG  1000H
+TABLA DB 1,2,3,4,5,0h   ( preguntar como hacer una tabla de caracteres)
+
+ORG 3000H
+subrutina:MOV BX,OFFSET TABLA
+REPETIR: CMP byte ptr [BX],0
+JZ terminar
+INC AL
+INC BX
+JMP REPETIR
+terminar: ret
+
+ORG 2000H
+call subrutina
+
+FIN: HLT
+END

@@ -1,0 +1,55 @@
+ORG 1000H
+vocales db "aeiou"
+tabla db "mocoa"
+ORG 3000H
+
+ES_VOCAL:PUSH AX ;pusheo los registros para no perder los valores
+PUSH BX
+PUSH CX
+
+MOV BX,OFFSET vocales ;le muevo a bx la direccion del primer elemento de las vocales
+
+MOV DH,0H ;le muevo a la parte alta de D el valor por defecto 0, osea que seria que no es vocal
+MOV AL,OFFSET tabla-OFFSET vocales ;le muevo a la parte baja de A la cantidad de iteraciones que tengo que hacer para recorrer las vocales
+
+REPETIR: CMP AL,0 ;comparo el valor para ver si no termine
+JZ VOLVER ;si termine de recorrer y no era vocal,vuelvo a VOCALES
+CMP [BX],CL ;comparo la letra almacenada en CL con cada uno de lso caracteres de vocales
+JZ SI_ES ;si me da 0 quiere decir que era vocal, vuelvo a si es y le muevo a la parte alta de DH 0FFH (es decir que es vocal)
+DEC AL ;decremento cant de elementos
+INC BX ;aumento en uno la direccion
+JMP REPETIR
+
+
+SI_ES: MOV DH,0FFH;le pongo ese valor a DH ya que es vocal
+VOLVER: POP CX
+POP BX
+POP AX
+ret
+
+
+VOCALES: PUSH AX ; pusheo los registros que no voy a llevar nada para mantenerlos al salir
+PUSH BX
+PUSH DX
+loopsito: CMP DL,0 ;veo si ya termine con la cantidad de elementos
+JZ BACK ;si termine voy a back que es volver a la rutina principal
+MOV CL,[BX] ; a la parte baja de cl le pongo el primer caracter de la palabra
+CALL ES_VOCAL ;llamo a la subrutina para ver si es vocal
+CMP DH,0FFH ; si es vocal, entonces aumento la parte alta de C, que es donde tengo el contador de vocales
+JNZ KEEP; si no es vocal, vuelvo al loop
+INC CH ; aumento al ser vocal
+KEEP: INC BX ;incremento una posicion en la memoria(al ser db)
+DEC DL ;decremento en una la cantidad de elementos analizados
+JMP loopsito ;vuelvo al loop 
+BACK:MOV CL,0
+POP DX
+POP BX
+POP AX
+ret
+
+ORG 2000H
+MOV BX,OFFSET tabla ;muevo la direccion de memoria de la tabla a bx
+MOV DL,OFFSET tabla- OFFSET vocales ;muevo a la parte baja de D la cantidad de elementos que tengo
+call VOCALES ;llamo a vocales
+FIN: HLT
+END

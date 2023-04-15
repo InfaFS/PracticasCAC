@@ -1,0 +1,167 @@
+ORG 1000H
+MSJ DB "INGRESE UN NUMERO:"
+FIN DB ?
+MSJ_ERROR DB "CARACTER NO VALIDO"
+FIN2 DB ?
+ORG 1500H
+NUM DB ?
+
+CADENA_CERO DB "CERO"
+FIN_CERO DB ?
+
+CADENA_UNO DB "UNO"
+FIN_UNO DB ?
+
+CADENA_DOS DB "DOS"
+FIN_DOS DB ?
+
+CADENA_TRES DB "TRES"
+FIN_TRES DB ?
+
+CADENA_CUATRO DB "CUATRO"
+FIN_CUATRO DB ?
+
+CADENA_CINCO DB "CINCO"
+FIN_CINCO DB ?
+
+CADENA_SEIS DB "SEIS"
+FIN_SEIS DB ?
+
+CADENA_SIETE DB "SIETE"
+FIN_SIETE DB ?
+
+CADENA_OCHO DB "OCHO"
+FIN_OCHO DB ?
+
+CADENA_NUEVE DB "NUEVE"
+FIN_NUEVE DB ?
+
+ORG 3000H
+ES_NUM:PUSH BX;pusheo los registros para mantener los valores
+PUSH AX
+mov AL,[BX]; le cargo a AL el valor del numero cargado
+mov AH,30H; le cargo a AH el 0 en decimal; 
+verificar: CMP AH,40H;veo si no me pase del 9 decimal
+JZ volver; si es asi, vuelvo
+CMP AL,AH; sino, comparo el numero ingresado con el actual de AH
+JZ guardar_caracter; si es valido, entonces salto a dicha etiqueta
+INC AH; si no lo es, incremente
+JMP verificar; vuelvo al loop
+
+guardar_caracter:MOV CL,AL ;si es valido, entonces guardo en CL 0FFH
+volver: pop AX;libero los registros
+POP BX
+ret
+
+IMPRESION: push BX
+CMP CL,30H ;comparo que numero es el ingresado
+JZ imprimir_cero
+
+CMP CL,31H
+JZ imprimir_uno
+
+CMP CL,32H
+JZ imprimir_dos
+
+CMP CL,33H
+JZ imprimir_tres
+
+CMP CL,34H
+JZ imprimir_cuatro
+
+CMP CL,35H
+JZ imprimir_cinco
+
+CMP CL,36H
+JZ imprimir_seis
+
+CMP CL,37H
+JZ imprimir_siete
+
+CMP CL,38H
+JZ imprimir_ocho
+
+
+CMP CL,39H
+JZ imprimir_nueve
+
+
+
+
+imprimir_cero: MOV BX,OFFSET CADENA_CERO ; para cada numero, hay una string con la representacion verbal del numero
+MOV AL,OFFSET FIN_CERO- OFFSET CADENA_CERO ;muevo a al la cantidad de caracteres
+INT 7 ; lo muestro
+JMP retornar_a_loop ;vuelvo al loop
+
+
+imprimir_uno: MOV BX,OFFSET CADENA_UNO
+MOV AL,OFFSET FIN_UNO- OFFSET CADENA_UNO
+INT 7
+JMP retornar_a_loop
+
+
+imprimir_dos: MOV BX,OFFSET CADENA_DOS
+MOV AL,OFFSET FIN_DOS - OFFSET CADENA_DOS
+INT 7
+JMP retornar_a_loop
+
+imprimir_tres: MOV BX,OFFSET CADENA_TRES
+MOV AL,OFFSET FIN_TRES- OFFSET CADENA_TRES
+INT 7
+JMP retornar_a_loop
+
+imprimir_cuatro: MOV BX,OFFSET CADENA_CUATRO
+MOV AL,OFFSET FIN_CUATRO- OFFSET CADENA_CUATRO
+INT 7
+JMP retornar_a_loop
+
+imprimir_cinco: MOV BX,OFFSET CADENA_CINCO
+MOV AL,OFFSET FIN_CINCO- OFFSET CADENA_CINCO
+INT 7
+JMP retornar_a_loop
+
+imprimir_seis: MOV BX,OFFSET CADENA_SEIS
+MOV AL,OFFSET FIN_SEIS- OFFSET CADENA_SEIS
+INT 7
+JMP retornar_a_loop
+
+imprimir_siete: MOV BX,OFFSET CADENA_SIETE
+MOV AL,OFFSET FIN_SIETE- OFFSET CADENA_SIETE
+INT 7
+JMP retornar_a_loop
+
+imprimir_ocho: MOV BX,OFFSET CADENA_OCHO
+MOV AL,OFFSET FIN_OCHO- OFFSET CADENA_OCHO
+INT 7
+JMP retornar_a_loop
+
+imprimir_nueve: MOV BX,OFFSET CADENA_NUEVE
+MOV AL,OFFSET FIN_NUEVE- OFFSET CADENA_NUEVE
+INT 7
+
+retornar_a_loop: pop BX
+ret
+
+loop_numeros: CMP DL,02H ; si puse 2 veces 0, vuelve al programa principal
+JZ volver_main 
+INT 6 ;sino, pide un numero
+CALL ES_NUM ; ve que numero es en el registro CL 
+CMP CL,30H ;compara a ver si es 0
+JNZ reset_cont; si no es, se resetea el contador ya que el 0 debe ser ingresado 2 veces seguidas
+INC DL ;incremento el contador ya que fue 0
+JMP seguir
+reset_cont: mov DL,00H ; se resetea si fue otro numero poniendolo en 0
+seguir: CALL IMPRESION ; llamo a la subrutina de impresion
+jmp loop_numeros ; vuelvo al loop
+
+volver_main: ret
+
+ORG 2000H
+MOV BX, OFFSET MSJ ;muevo a bx la direccion del mensaje a imprimir
+MOV AL, OFFSET FIN-OFFSET MSJ ;muevo a al la cantidad de caracteres que se imprimen
+INT 7 ;muestro en pantalla
+MOV BX, OFFSET NUM ;le muevo a bx la direccion del numero a ingresar
+
+call loop_numeros; llamo al loop de numeros
+INT 0
+END
