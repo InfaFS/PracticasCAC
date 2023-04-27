@@ -1,0 +1,90 @@
+PIC EQU 20H
+EOI EQU 20H
+N_F10 EQU 10
+PIO EQU 30H
+ORG 1000H
+NUM_CAR DB 5
+CAR DB ?
+TABLA DB "?????"
+
+ORG 40
+IP_F10 DW RUT_F10
+
+ORG 3000H ; SUBRUTINA DE INICIALIZACION
+INI_IMP: MOV AL, 0FDH  ; SUBRUTINA DE GENERACIÓN
+OUT PIO+2, AL ;es  una inicializacion general del pio
+MOV AL, 0 
+OUT PIO+3, AL 
+IN AL, PIO 
+AND AL, 0FDH 
+OUT PIO, AL 
+RET
+
+ORG 3500H
+RUT_F10: PUSH AX
+INC CH
+MOV AL, EOI
+OUT EOI, AL ; PIC: registro EOI
+POP AX
+IRET
+
+
+ORG 4000H ; PIO PARA IMPRESORA
+PULSO: IN AL, PIO ; DE PULSO 'STROBE'
+OR AL, 02H;le manda la senial de imprimir
+OUT PIO, AL
+IN AL, PIO
+AND AL, 0FDH
+OUT PIO, AL
+RET
+; PROGRAMA PRINCIPAL
+ORG 2000H
+CLI
+PUSH AX
+;CONFIGURO PIC F10
+MOV AL, 0FEH
+OUT PIC+1, AL ; PIC: registro IMR
+MOV AL, N_F10
+OUT PIC+4, AL ; PIC: registro INT0
+MOV DX, 0
+POP AX
+;TERMINE DE CONFIGURAR
+PUSH AX
+CALL INI_IMP
+POP AX
+MOV BX,OFFSET TABLA ; le muevo a bx la direccion del primer elemento de la tabla
+PUSH BX;pusheo el valor
+MOV CL, NUM_CAR
+MOV CH,NUM_CAR;le muevo a ch el caracter
+LAZO: MOV BX, OFFSET CAR ;realizo una iteracion donde voy leyendo y almacenando hasta 5 caracteres
+int 6;interrumpo para leer de teclado
+MOV AH,[BX] ; le muevo el caracter a AH
+POP BX; recupero direccion de la tabla
+MOV [BX],AH;le modifico el valor a la tabla
+INC BX;paso a la otra direccion
+PUSH BX;pusheo el valor
+DEC CH;decremento el contador de cuantas veces lo tengo que hacer(5 en este caso)
+JNZ LAZO;voy a lazo sino
+POP BX; saco el valor de la pila
+MOV BX,OFFSET TABLA;si termine,le muevo a bx la primera direccion
+PUSH BX;pusheo la direccion
+MOV CH,0
+STI
+ESPERAR: CMP CH,1
+JNZ ESPERAR
+CLI
+POLL:IN AL, PIO
+AND AL, 1 ;ve si la impresora esta ocupada o no
+JNZ POLL
+POP BX;recupero direccion
+MOV AL, [BX];le muevo a la parte baja de AX,el caracter apuntado por la tabla
+INC BX ;incremento la direccion
+push BX;pusheo BX
+OUT PIO+1, AL;le cargo al registro PB del pio el caracter
+PUSH AX
+CALL PULSO
+POP AX
+DEC CL
+JNZ POLL
+INT 0
+END

@@ -1,0 +1,71 @@
+PIC EQU 20H
+HAND EQU 40H
+N_HND EQU 10
+ORG 40 
+IP_HND DW RUT_HND 
+ORG 1000H
+TABLA DB "?????"
+FIN db ?
+CAR DB ?
+
+ORG 3000H 
+
+RUT_HND: PUSH AX 
+MOV AL, [BX] 
+OUT HAND, AL ;el out hand ya guarda en el buffer la letra
+DEC CL ;decremento el contador de veces
+CMP CL,OFFSET FIN-OFFSET TABLA ;comparo si llegue hasta a la mitad
+JNZ COMPARACION; si no llegue hasta la mitad voy a comparacion
+INC CH;sini prendo flag 
+COMPARACION: CMP CH,01H ;veo si esta prendido el flag
+JNZ NORMAL;si no esta predido incremento la direccion de bx
+DEC BX;sino la decremento
+JMP volver;vuelvo
+
+NORMAL:INC BX;incremento y vuelvo
+volver:MOV AL, 20H ;indico a pic qued termino interrupcion
+OUT PIC, AL
+POP AX
+IRET 
+
+ORG 2000H
+CLI
+MOV AL, 0FFH; habilito solo interrupciones de tipo int 6
+OUT PIC+1, AL
+MOV AL, N_HND
+OUT PIC+6, AL
+MOV AL, 80H
+OUT HAND+1, AL
+STI
+MOV CL, OFFSET FIN-OFFSET TABLA
+MOV CH,CL
+MOV BX, OFFSET TABLA
+PUSH BX
+
+CARGAR_TABLA:CMP CH,0;voy cargandole a la tabla valor por valor
+JZ PERMITIR
+MOV BX,OFFSET CAR
+INT 6
+POP BX
+MOV AH,CAR
+MOV [BX],AH
+INC BX
+PUSH BX
+DEC CH
+JMP CARGAR_TABLA
+
+PERMITIR:POP BX ; si termine, habilito al PIC para impresora
+MOV BX,OFFSET TABLA
+MOV CL,OFFSET FIN- OFFSET TABLA
+ADD CL,CL ;le cargo a CL cantidad de caracteres a imprimir
+MOV CH,00H
+MOV AL,0FBH
+OUT PIC+1,AL
+
+LAZO: CMP CL,01h; ponemos hasta 1 porque imprime 9(la e no la imprime de vuelta)
+JNZ LAZO
+IN AL, HAND+1 ;cierro el hand de esta manera(supongo)
+AND AL, 7FH
+OUT HAND+1, AL
+INT 0
+END

@@ -1,0 +1,75 @@
+PIC EQU 20H
+TIMER EQU 10H
+PIO EQU 30H
+N_CLK EQU 10
+ORG 40
+IP_CLK DW RUT_CLK
+ORG 1000H
+LED DB 0
+
+
+ORG 2000h
+CLI 
+MOV AL, 0FDH 
+OUT PIC+1, AL 
+MOV AL, N_CLK
+OUT PIC+5, AL 
+MOV AL, 1
+OUT TIMER+1, AL
+MOV AL, 0 
+OUT PIO+3, AL ;PA ES PIO,PB ES PIO+1,CB ES PIO +3, CA ES PIO+2
+OUT PIO+1, AL 
+OUT TIMER, AL 
+
+MOV CL,-1H; en cl guardo un contador de a cuanto tendria que elevar el 2 del bit
+STI 
+LAZO: JMP LAZO
+ORG 3000H
+RUT_CLK: CMP DH,01h ;comparo la parte alta de D que es donde guardo si tengo que ir desde atras hacia adelante o viceversa
+JZ SEGUIR2 ;si esta prendido quiero decir que tengo que ir a seguir desde atras
+seguir:INC CL ;incremento CL, donde guardo a cuanto lo tengo que elevar
+CMP CL,07H;si esta en 7 quiere decir que ya hioz hasta 2 a la 7
+JNZ realizar_ops;si no esta en ,a ultiima operacion, sigo
+MOV DH,01H;sino prende el valor 
+realizar_ops:CMP CL,00H ;si es 2 a la 0, el led valdra 1
+jnz SEGUIR_normal;sino sigo
+mov LED,01h
+JMP LUCES
+
+SEGUIR_normal: MOV LED,02H; le muevo al led 2
+CMP CL,01h ;si es el contador esta en 1, entonces solo mando el 2 a la 1
+JNZ seguir_iteracion
+JMP LUCES
+
+seguir_iteracion: mov CH,01H;sino le muevo a CH 1, comparo con el contador general
+looping: CMP CH,Cl
+JZ LUCES ;si me da 0 voy a poner el led
+MOV DL,LED ;sino voy incrementando ese numero por si mismo
+ADD LED,DL
+INC CH
+JMP looping
+
+
+
+
+
+SEGUIR2: CMP DH,01H ;veo si esta prendido el valor
+JNZ seguir ;si no esta vuelvo al loop normal
+DEC CL ;decremento el contador
+CMP CL,00H ;comparo el contador con 00h
+JNZ realizar_ops_dos ;si no es 00 hago la operacion de ese valor reutilizando seguir_normal
+MOV DH,0H;sino, le muevo a DH que ya estoy en el principio 
+realizar_ops_dos: CMP CL,00h 
+jnz SEGUIR_normal ;voy a la iteracion
+mov LED,01h ;si no, pongo el led en 1
+JMP LUCES
+
+
+LUCES: MOV AL, LED
+OUT PIO+1, AL
+ MOV AL, 0
+ OUT TIMER, AL
+ MOV AL, 20H
+ OUT PIC, AL
+ IRET
+END
