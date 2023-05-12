@@ -1,0 +1,1 @@
+fijarse en los ejercicios primordialmente el delay slot, su funcionamiento y la correcion de los demas ejercicios, por lo demas todo ok

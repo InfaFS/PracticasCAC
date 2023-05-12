@@ -1,0 +1,1 @@
+Hay que evaluar bien lo que hace el slot delay y aplicarlo al 9, pero de momento funciona bien sin tener en consideracion lo otro
